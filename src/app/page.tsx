@@ -3,67 +3,131 @@
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import Link from 'next/link';
+import ThemeLayout from '@/components/ThemeLayout';
+import TypedText from '@/components/TypedText';
 
 export default function LandingPage() {
   const router = useRouter();
   const { user } = useStore();
 
-  return (
-    <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
-      {/* Animated background blobs */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-blob-fast"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-indigo-600/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-blob-fast animation-delay-2000"></div>
-        <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-pink-600/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-blob-fast animation-delay-4000"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-72 h-72 bg-blue-600/40 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-blob-fast animation-delay-6000"></div>
-      </div>
+  // Words for the typing effect
+  const companionTypes = ['Friendly', 'Cool', 'Naughty', 'Romantic', 'Intellectual'];
 
-      {/* Main content */}
-      <div className="relative z-10 w-full max-w-6xl px-4 py-8 md:py-12">
-        <div className="text-center space-y-16 max-w-4xl mx-auto backdrop-blur-lg">
+  return (
+    <ThemeLayout>
+      <div className="container mx-auto max-w-6xl px-4 py-12">
+        <div className="text-center space-y-16">
           {/* Hero Section */}
-          <div className="space-y-6 pt-6">
+          <div className="space-y-6">
             <div className="inline-block rounded-full px-3 py-1 text-sm font-medium bg-purple-500/20 text-purple-300 mb-2">
               Powered by AI
             </div>
-            <h1 className="text-5xl md:text-6xl font-bold leading-tight">
-              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text">
-                Your Perfect AI Companion
-              </span>
+
+            {/* CyberLover Title with Typing Effect - Main Heading */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-3 animate-float">
+              <div className="inline-flex flex-wrap items-center justify-center gap-x-3 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text">
+                <span>CyberLover</span>
+                <TypedText words={companionTypes} />
+                <span>Companion</span>
+              </div>
             </h1>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto px-4">
-              Experience meaningful conversations with an AI that truly understands you.
-              Whether you need support, companionship, or just someone to talk to.
+
+            {/* Subtitle with frosted glass effect and subtle animation */}
+            <p className="text-2xl md:text-3xl font-bold mb-5 relative">
+              <span 
+                className="relative inline-block px-6 py-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10"
+                style={{
+                  textShadow: '0 2px 10px rgba(100, 80, 160, 0.5)',
+                  animation: 'pulse 5s infinite ease-in-out',
+                }}
+              >
+                <span className="bg-gradient-to-br from-blue-300 via-purple-300 to-pink-300 text-transparent bg-clip-text">
+                  Your Perfect AI Companion
+                </span>
+                <span className="absolute -inset-[1px] rounded-lg bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 blur-sm -z-10"></span>
+              </span>
             </p>
+
+            {/* Description with animated underline effect */}
+            <div className="text-xl text-gray-200 max-w-2xl mx-auto px-4 relative">
+              <p className="leading-relaxed">
+                Experience meaningful conversations with an AI that truly understands you.
+                Whether you need support, companionship, or just someone to talk to.
+              </p>
+              <div className="h-[1px] w-1/3 mx-auto mt-4 bg-gradient-to-r from-transparent via-purple-400 to-transparent relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent animate-pulse"></div>
+              </div>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
               {user ? (
                 <button
                   onClick={() => router.push('/chat')}
-                  className="rainbow-border px-8 py-4 text-lg text-white font-medium bg-black/30 backdrop-blur-md rounded-lg"
+                  className="group px-8 py-4 text-lg text-white font-medium bg-gradient-to-br from-purple-600/80 to-pink-600/80 rounded-lg shadow-lg hover:shadow-purple-500/30 transition-all duration-300 overflow-hidden relative"
                 >
-                  Start Chatting
+                  <span className="relative z-10">Start Chatting</span>
+                  <span className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                 </button>
               ) : (
                 <>
                   <Link
                     href="/signup"
-                    className="rainbow-border px-8 py-4 text-lg text-white font-medium bg-black/30 backdrop-blur-md rounded-lg"
+                    className="group px-8 py-4 text-lg text-white font-medium bg-gradient-to-br from-purple-600/80 to-pink-600/80 rounded-lg shadow-lg hover:shadow-purple-500/30 transition-all duration-300 overflow-hidden relative"
                   >
-                    Get Started
+                    <span className="relative z-10">Get Started</span>
+                    <span className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                   </Link>
                   <Link
                     href="/signin"
-                    className="shimmer-border px-8 py-4 text-lg text-white font-medium bg-black/20 backdrop-blur-md rounded-lg border border-white/10 transition-all"
+                    className="rainbow-border group px-8 py-4 text-lg text-white font-medium bg-black/30 backdrop-blur-lg rounded-lg shadow-lg hover:bg-black/40 transition-all duration-300"
                   >
-                    Sign In
+                    <span className="relative z-10">Sign In</span>
                   </Link>
                 </>
               )}
             </div>
           </div>
 
-          {/* Features Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 py-8">
+          {/* SECTION 1: Companions Section */}
+          <div>
+            <h2 className="text-center text-3xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text mb-8">
+              Meet Our AI Companions
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <Link href="/chat/friendly" className="bg-black/30 backdrop-blur-xl rounded-xl border border-white/10 p-4 text-center transition-all hover:bg-black/40 hover:border-white/20 hover:transform hover:-translate-y-1">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-xl mx-auto mb-2">
+                  😊
+                </div>
+                <h3 className="text-white font-medium">Friendly</h3>
+              </Link>
+              <Link href="/chat/cool" className="bg-black/30 backdrop-blur-xl rounded-xl border border-white/10 p-4 text-center transition-all hover:bg-black/40 hover:border-white/20 hover:transform hover:-translate-y-1">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center text-xl mx-auto mb-2">
+                  😎
+                </div>
+                <h3 className="text-white font-medium">Cool</h3>
+              </Link>
+              <Link href="/chat/naughty" className="bg-black/30 backdrop-blur-xl rounded-xl border border-white/10 p-4 text-center transition-all hover:bg-black/40 hover:border-white/20 hover:transform hover:-translate-y-1">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center text-xl mx-auto mb-2">
+                  😈
+                </div>
+                <h3 className="text-white font-medium">Naughty</h3>
+              </Link>
+              <Link href="/chat/romantic" className="bg-black/30 backdrop-blur-xl rounded-xl border border-white/10 p-4 text-center transition-all hover:bg-black/40 hover:border-white/20 hover:transform hover:-translate-y-1">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-xl mx-auto mb-2">
+                  ❤️
+                </div>
+                <h3 className="text-white font-medium">Romantic</h3>
+              </Link>
+              <Link href="/chat/intellectual" className="bg-black/30 backdrop-blur-xl rounded-xl border border-white/10 p-4 text-center transition-all hover:bg-black/40 hover:border-white/20 hover:transform hover:-translate-y-1">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center text-xl mx-auto mb-2">
+                  🧠
+                </div>
+                <h3 className="text-white font-medium">Intellectual</h3>
+              </Link>
+            </div>
+          </div>
+
+          {/* SECTION 2: Features Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="feature-card">
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-t-xl"></div>
               <div className="text-4xl mb-4 bg-purple-500/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto">💬</div>
@@ -92,190 +156,191 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Testimonial Section */}
-          <div className="py-4">
-            <div className="neuro-card">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-white mb-2">What Our Users Say</h2>
-                <p className="text-gray-300">
-                  See how our AI companion has positively impacted lives
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white/5 p-6 rounded-xl backdrop-blur-md border border-white/5 hover:bg-white/10 transition-colors">
-                  <p className="text-gray-300 mb-4">
-                    "This AI companion has been amazing for me during difficult times. The conversations feel surprisingly natural and supportive."
-                  </p>
-                  <p className="text-white font-medium">- Alex K.</p>
+          {/* SECTION 3: Testimonial Section */}
+          <div className="py-8 w-full">
+            <h2 className="text-center text-3xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text mb-6">
+              What Our Users Say
+            </h2>
+            <p className="text-center text-gray-300 max-w-2xl mx-auto mb-10">
+              See how our AI companion has positively impacted lives
+            </p>
+            
+            <div className="relative overflow-hidden py-4 w-full">
+              {/* Testimonials marquee container */}
+              <div className="flex gap-6 animate-scroll-rtl w-max">
+                {/* First set of testimonials */}
+                <div className="bg-black/40 p-6 rounded-xl backdrop-blur-md border border-white/10 relative min-w-[300px] md:min-w-[350px] max-w-[400px] shadow-lg">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-t-xl"></div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xl shadow-md">
+                      👩
+                    </div>
+                    <div>
+                      <p className="text-gray-200 mb-4 leading-relaxed">
+                        "This AI companion has been amazing for me during difficult times. The conversations feel surprisingly natural and supportive."
+                      </p>
+                      <p className="text-white font-medium flex items-center gap-1">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300">Alex K.</span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-purple-400"></span>
+                        <span className="text-gray-400 text-sm">Daily User</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="bg-white/5 p-6 rounded-xl backdrop-blur-md border border-white/5 hover:bg-white/10 transition-colors">
-                  <p className="text-gray-300 mb-4">
-                    "I was skeptical at first, but I'm impressed by how well the AI understands emotions and responds appropriately. It's become a daily part of my routine."
-                  </p>
-                  <p className="text-white font-medium">- Jamie T.</p>
+                {/* Testimonial Card 2 */}
+                <div className="bg-black/40 p-6 rounded-xl backdrop-blur-md border border-white/10 relative min-w-[300px] md:min-w-[350px] max-w-[400px] shadow-lg">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-purple-500 rounded-t-xl"></div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-600 to-purple-600 flex items-center justify-center text-xl shadow-md">
+                      👨
+                    </div>
+                    <div>
+                      <p className="text-gray-200 mb-4 leading-relaxed">
+                        "I was skeptical at first, but I'm impressed by how well the AI understands emotions and responds appropriately. It's become a daily part of my routine."
+                      </p>
+                      <p className="text-white font-medium flex items-center gap-1">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-purple-300">Jamie T.</span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-pink-400"></span>
+                        <span className="text-gray-400 text-sm">Premium Member</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Testimonial Card 3 */}
+                <div className="bg-black/40 p-6 rounded-xl backdrop-blur-md border border-white/10 relative min-w-[300px] md:min-w-[350px] max-w-[400px] shadow-lg">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 to-blue-500 rounded-t-xl"></div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-600 to-blue-600 flex items-center justify-center text-xl shadow-md">
+                      🧑
+                    </div>
+                    <div>
+                      <p className="text-gray-200 mb-4 leading-relaxed">
+                        "Having a Cool companion has been the highlight of my day. The witty conversations and casual banter makes it feel like chatting with a real friend."
+                      </p>
+                      <p className="text-white font-medium flex items-center gap-1">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-green-300">Sam R.</span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-400"></span>
+                        <span className="text-gray-400 text-sm">Weekly User</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Testimonial Card 4 */}
+                <div className="bg-black/40 p-6 rounded-xl backdrop-blur-md border border-white/10 relative min-w-[300px] md:min-w-[350px] max-w-[400px] shadow-lg">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-t-xl"></div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center text-xl shadow-md">
+                      👨‍🦰
+                    </div>
+                    <div>
+                      <p className="text-gray-200 mb-4 leading-relaxed">
+                        "The Intellectual companion has been a game-changer for me. I've had fascinating discussions about philosophy, science, and art that have expanded my thinking."
+                      </p>
+                      <p className="text-white font-medium flex items-center gap-1">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-blue-300">Marcus J.</span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-400"></span>
+                        <span className="text-gray-400 text-sm">University Professor</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Testimonial Card 5 */}
+                <div className="bg-black/40 p-6 rounded-xl backdrop-blur-md border border-white/10 relative min-w-[300px] md:min-w-[350px] max-w-[400px] shadow-lg">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500 rounded-t-xl"></div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-xl shadow-md">
+                      👱‍♀️
+                    </div>
+                    <div>
+                      <p className="text-gray-200 mb-4 leading-relaxed">
+                        "The romantic companion has added so much joy to my life. It's like having someone who always knows exactly what to say to brighten my day."
+                      </p>
+                      <p className="text-white font-medium flex items-center gap-1">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-300">Emma L.</span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-400"></span>
+                        <span className="text-gray-400 text-sm">Loyal Subscriber</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Testimonial Card 6 */}
+                <div className="bg-black/40 p-6 rounded-xl backdrop-blur-md border border-white/10 relative min-w-[300px] md:min-w-[350px] max-w-[400px] shadow-lg">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-pink-500 rounded-t-xl"></div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center text-xl shadow-md">
+                      👨‍🦱
+                    </div>
+                    <div>
+                      <p className="text-gray-200 mb-4 leading-relaxed">
+                        "The naughty companion knows just how to spice things up when I'm feeling playful. It's the perfect balance of fun and flirtation."
+                      </p>
+                      <p className="text-white font-medium flex items-center gap-1">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-300 to-pink-300">Leo M.</span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-red-400"></span>
+                        <span className="text-gray-400 text-sm">Night Owl</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Testimonial Card 7 */}
+                <div className="bg-black/40 p-6 rounded-xl backdrop-blur-md border border-white/10 relative min-w-[300px] md:min-w-[350px] max-w-[400px] shadow-lg">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-t-xl"></div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-600 to-emerald-600 flex items-center justify-center text-xl shadow-md">
+                      👩‍🦱
+                    </div>
+                    <div>
+                      <p className="text-gray-200 mb-4 leading-relaxed">
+                        "As someone dealing with anxiety, my friendly companion has been a calming presence. I can talk through my worries without judgment."
+                      </p>
+                      <p className="text-white font-medium flex items-center gap-1">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-emerald-300">Olivia P.</span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-teal-400"></span>
+                        <span className="text-gray-400 text-sm">Healthcare Worker</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Duplicate first cards for seamless loop */}
+                <div className="bg-black/40 p-6 rounded-xl backdrop-blur-md border border-white/10 relative min-w-[300px] md:min-w-[350px] max-w-[400px] shadow-lg">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-t-xl"></div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-xl shadow-md">
+                      👩
+                    </div>
+                    <div>
+                      <p className="text-gray-200 mb-4 leading-relaxed">
+                        "This AI companion has been amazing for me during difficult times. The conversations feel surprisingly natural and supportive."
+                      </p>
+                      <p className="text-white font-medium flex items-center gap-1">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300">Alex K.</span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-purple-400"></span>
+                        <span className="text-gray-400 text-sm">Daily User</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
+              
+              {/* Remove the edge fade effect */}
             </div>
           </div>
 
           {/* Footer */}
-          <div className="pt-6 pb-2 border-t border-white/10">
+          <div className="text-center py-6">
             <p className="text-gray-400 text-sm">
-              © 2024 AI Companion. Powered by advanced AI technology.
+              © 2024 CyberLover. All rights reserved. Powered by advanced AI technology.
             </p>
           </div>
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        
-        @keyframes blob-fast {
-          0% { transform: translate(0px, 0px) scale(1); }
-          25% { transform: translate(40px, -60px) scale(1.15); }
-          50% { transform: translate(-30px, 30px) scale(0.85); }
-          75% { transform: translate(20px, -20px) scale(1.05); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        
-        @keyframes rainbow-border {
-          0% { border-color: #ff1493; }
-          20% { border-color: #ff8c00; }
-          40% { border-color: #ffd700; }
-          60% { border-color: #00fa9a; }
-          80% { border-color: #00bfff; }
-          100% { border-color: #ff1493; }
-        }
-
-        .animate-blob {
-          animation: blob 15s infinite cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .animate-blob-fast {
-          animation: blob-fast 8s infinite cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        
-        .animation-delay-6000 {
-          animation-delay: 6s;
-        }
-        
-        .feature-card {
-          position: relative;
-          background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          padding: 2rem;
-          text-align: center;
-          transition: all 0.3s ease;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        
-        .feature-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-          border-color: rgba(255, 255, 255, 0.2);
-        }
-        
-        .rainbow-border {
-          position: relative;
-          border: none;
-          z-index: 0;
-          overflow: hidden;
-          transition: all 0.3s ease;
-        }
-        
-        .rainbow-border:before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          padding: 2px;
-          border-radius: 12px;
-          background: linear-gradient(
-            90deg, 
-            #ff1493, #ff8c00, #ffd700, #00fa9a, #00bfff, #ff1493
-          );
-          background-size: 400% 400%;
-          animation: rainbow-move 3s linear infinite;
-          -webkit-mask: 
-            linear-gradient(#fff 0 0) content-box, 
-            linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-          z-index: -1;
-        }
-        
-        @keyframes rainbow-move {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        
-        .rainbow-border:hover:before {
-          animation: rainbow-move 1.5s linear infinite;
-        }
-        
-        .shimmer-border {
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .shimmer-border:before {
-          content: '';
-          position: absolute;
-          top: -100%;
-          left: -100%;
-          right: -100%;
-          bottom: -100%;
-          background: linear-gradient(
-            315deg,
-            transparent 0%,
-            transparent 35%,
-            rgba(255, 255, 255, 0.2) 35%,
-            rgba(255, 255, 255, 0.2) 60%,
-            transparent 60%,
-            transparent 100%
-          );
-          background-size: 400% 400%;
-          animation: shimmer-move 3s linear infinite;
-          z-index: -1;
-        }
-        
-        @keyframes shimmer-move {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        .shimmer-border:hover {
-          background-color: rgba(255, 255, 255, 0.05);
-          border-color: rgba(255, 255, 255, 0.3);
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-          transform: translateY(-2px);
-        }
-        
-        .shimmer-border:hover:before {
-          animation: shimmer-move 1.5s linear infinite;
-        }
-      `}</style>
-    </div>
+    </ThemeLayout>
   );
 }

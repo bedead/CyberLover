@@ -6,13 +6,14 @@ export default function CreditsManager() {
   const router = useRouter();
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="text-white">
-        <span className="text-gray-300">Credits:</span> {credits.toFixed(1)}
+    <div className="glass-card p-4 flex items-center justify-between">
+      <div className="flex items-center space-x-2">
+        <span className="text-white font-medium">Credits:</span>
+        <span className="text-blue-300 font-bold">{credits}</span>
       </div>
       <button
         onClick={() => router.push('/buy-credits')}
-        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+        className="glass-button"
       >
         Buy Credits
       </button>

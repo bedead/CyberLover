@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { useStore } from '@/store/useStore';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 export function useAuth() {
   const { setUser, setCredits } = useStore();
@@ -19,15 +19,6 @@ export function useAuth() {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             setCredits(userData.credits || 0);
-          } else {
-            // If user document doesn't exist, create it with initial credits
-            await setDoc(doc(db, 'users', user.uid), {
-              email: user.email,
-              credits: 100,
-              conversations: 0,
-              createdAt: new Date().toISOString(),
-            });
-            setCredits(100);
           }
         } catch (error) {
           console.error('Error fetching user data:', error);

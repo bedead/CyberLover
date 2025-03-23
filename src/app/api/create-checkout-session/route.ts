@@ -9,6 +9,16 @@ export async function POST(request: Request) {
     try {
         const { credits, price } = await request.json();
 
+        // Check if Stripe is properly initialized
+        if (!stripe) {
+            return new Response(
+                JSON.stringify({ 
+                    error: 'Stripe is not configured. Please set the STRIPE_SECRET_KEY environment variable.' 
+                }),
+                { status: 500 }
+            );
+        }
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [

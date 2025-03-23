@@ -1,16 +1,17 @@
 import { useState } from 'react';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { useStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function SignIn() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { setUser, setCredits } = useStore();
+  const { setUser, loadUserData } = useStore();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,16 +20,46 @@ export default function SignIn() {
 
     try {
       if (isSignUp) {
+        // Create new user account
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         setUser(userCredential.user);
-        setCredits(100); // Set initial credits for new users
-        toast.success('Account created successfully!');
+        
+        // Initialize user data in Firestore including metrics
+        const userId = userCredential.user.uid;
+        await setDoc(doc(db, 'users', userId), {
+          email: userCredential.user.email,
+          credits: 10, // Give new users some starter credits
+          metrics: {
+            totalConversations: 0,
+            lastOnline: serverTimestamp(),
+            companionInteractions: {
+              friendly: 0,
+              cool: 0,
+              naughty: 0,
+              romantic: 0,
+              intellectual: 0,
+            },
+            messagesExchanged: 0,
+            creditsUsed: 0,
+            createdAt: serverTimestamp(),
+          }
+        });
+        
+        // Load the user data to update the local state
+        await loadUserData(userId);
+        
+        toast.success('Account created successfully! You\'ve received 10 free credits.');
       } else {
+        // Sign in existing user
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         setUser(userCredential.user);
+        
+        // Load user data including metrics
+        await loadUserData(userCredential.user.uid);
+        
         toast.success('Signed in successfully!');
       }
-      router.push('/dashboard');
+      router.push('/chat');
     } catch (error: any) {
       toast.error(error.message);
     } finally {

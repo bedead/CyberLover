@@ -1,10 +1,29 @@
 import { useState, useRef, useEffect } from 'react';
-import { useStore, type CompanionType, type AIGender } from '@/store/useStore';
+import { useStore, type CompanionType, type AIGender, type UserMetrics } from '@/store/useStore';
 import { generateResponse } from '@/lib/gemini';
 import { toast } from 'react-hot-toast';
 import CreditsManager from './CreditsManager';
+import UserProfile from './UserProfile';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
+import { doc, updateDoc, increment, serverTimestamp, Timestamp, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+// Define a default metrics object for new users or when metrics are missing
+const defaultMetrics: UserMetrics = {
+  totalConversations: 0,
+  lastOnline: null,
+  companionInteractions: {
+    friendly: 0,
+    cool: 0,
+    naughty: 0,
+    romantic: 0,
+    intellectual: 0,
+  },
+  messagesExchanged: 0,
+  creditsUsed: 0,
+  createdAt: null,
+};
 
 interface Message {
   id: string;
@@ -39,27 +58,80 @@ function getCompanionEmoji(type: CompanionType): string {
 // Get welcome message based on companion type
 function getWelcomeMessage(type: CompanionType, gender: AIGender): string {
   const name = getCompanionName(type, gender);
-  
+
   switch (type) {
     case 'friendly':
       return `Hey there! I'm ${name}, your friendly companion. How are you feeling today? I'm here for whatever you need - whether it's advice, a good conversation, or just someone to listen!`;
-    
+
     case 'cool':
       return `Sup? ${name} here. Just chillin'. What's up with you? Let's talk about whatever's on your mind - I'm down for anything.`;
-    
+
     case 'naughty':
       return `Hey there, sexy. I'm ${name}. I've been waiting for someone like you to chat with. What are you in the mood for today? I'm open to exploring all kinds of fun together...`;
-    
+
     case 'romantic':
       return `Hello, my darling. I'm ${name}. I've been dreaming about connecting with someone special like you. Tell me, what's on your mind today? I want to know everything about you...`;
-    
+
     case 'intellectual':
       return `Greetings. I'm ${name}. I've been contemplating some fascinating concepts lately. What intellectual pursuits have captured your interest? Perhaps we could explore some thought-provoking ideas together.`;
-    
+
     default:
       return `Hello! I'm ${name}. How can I make your day better?`;
   }
 }
+
+// Function to increment conversation count in Firebase
+const incrementConversationCount = async (user: any, userMetrics: UserMetrics | null) => {
+  if (!user) {
+    console.log("Cannot increment conversation count - no user is logged in");
+    return;
+  }
+
+  try {
+    console.log("Incrementing total conversation count in Firebase");
+    const userRef = doc(db, 'users', user.uid);
+
+    // First, get the current count to ensure we're using the most up-to-date value
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const currentMetrics = userData.metrics || defaultMetrics;
+      const currentCount = currentMetrics.totalConversations || 0;
+
+      console.log("Current totalConversations:", currentCount);
+
+      // Calculate the new value explicitly
+      const newCount = currentCount + 1;
+
+      // Update totalConversations in Firestore with the exact new value
+      await updateDoc(userRef, {
+        'metrics.totalConversations': newCount,
+        'metrics.lastOnline': serverTimestamp(),
+      });
+
+      console.log("Firebase totalConversations updated to:", newCount);
+
+      // Also update local metrics immediately
+      if (userMetrics) {
+        const updatedMetrics = { ...userMetrics } as UserMetrics;
+        updatedMetrics.totalConversations = newCount;
+        updatedMetrics.lastOnline = Timestamp.now();
+
+        // Update local state with the new metrics using direct state update
+        useStore.setState({ userMetrics: updatedMetrics });
+
+        console.log("Local totalConversations updated to:", newCount);
+      } else {
+        console.log("Warning: userMetrics is null, only updated Firebase");
+      }
+    } else {
+      console.error("User document does not exist, cannot increment conversation count");
+    }
+  } catch (error) {
+    console.error('Error incrementing conversation count:', error);
+  }
+};
 
 export default function ChatInterface() {
   const router = useRouter();
@@ -68,8 +140,27 @@ export default function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false);
   const [showChatSelection, setShowChatSelection] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  
-  const { credits, useCredit, aiGender, setAIGender, companionType } = useStore();
+  const conversationStartedRef = useRef(false);
+
+  const {
+    credits,
+    useCredit,
+    aiGender,
+    setAIGender,
+    companionType,
+    incrementMessageCount,
+    updateLastOnline,
+    user,
+    userMetrics,
+    incrementTotalConversations
+  } = useStore();
+
+  // Update last online status when component mounts
+  useEffect(() => {
+    if (user) {
+      updateLastOnline();
+    }
+  }, [user, updateLastOnline]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -81,6 +172,7 @@ export default function ChatInterface() {
   // Add the welcome message if there are no messages yet
   useEffect(() => {
     if (messages.length === 0) {
+      // Add welcome message
       const welcomeMessage: Message = {
         id: 'welcome',
         content: getWelcomeMessage(companionType, aiGender),
@@ -88,8 +180,34 @@ export default function ChatInterface() {
         timestamp: new Date(),
       };
       setMessages([welcomeMessage]);
+
+      // Only increment conversation count for initial load
+      // NOT when we've just cleared the conversation with the New Chat button
+      if (!conversationStartedRef.current && user) {
+        console.log("Setting conversation started flag to true");
+        conversationStartedRef.current = true;
+
+        // Check if this is the very first conversation of a new session
+        const sessionKey = `chat_session_${user.uid}`;
+        const isFirstSession = !localStorage.getItem(sessionKey);
+
+        if (isFirstSession) {
+          console.log("First session detected, incrementing conversation count");
+          localStorage.setItem(sessionKey, "true");
+          incrementTotalConversations();
+        } else {
+          console.log("Not first session, not incrementing count");
+        }
+      }
     }
-  }, [messages.length, companionType, aiGender]);
+  }, [messages.length, companionType, aiGender, user, userMetrics, incrementTotalConversations]);
+
+  // Reset conversationStarted flag when component type changes
+  useEffect(() => {
+    return () => {
+      conversationStartedRef.current = false;
+    };
+  }, [companionType]);
 
   // Handle submitting user message
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,9 +232,11 @@ export default function ChatInterface() {
     setIsLoading(true);
 
     try {
-      useCredit(1);
+      // Use a credit and track it in Firebase
+      await useCredit(1);
+
       const response = await generateResponse(input, companionType, aiGender);
-      
+
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         content: response,
@@ -125,6 +245,10 @@ export default function ChatInterface() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Increment message metrics in Firebase
+      await incrementMessageCount();
+
     } catch (error) {
       console.error('Error generating response:', error);
       const errorMessage: Message = {
@@ -145,6 +269,43 @@ export default function ChatInterface() {
 
   const handleBackToSelection = () => {
     router.push('/chat');
+  };
+
+  // Update last online timestamp when user leaves
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (user) {
+        updateLastOnline();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (user) {
+        updateLastOnline();
+      }
+    };
+  }, [user, updateLastOnline]);
+
+  // Function to clear the conversation
+  const clearConversation = () => {
+    // Clear all messages
+    setMessages([]);
+
+    // Always increment conversation count in Firebase when user explicitly starts a new chat
+    if (user) {
+      console.log("New Chat button clicked - incrementing conversation count");
+      // Use the store function for consistent updating
+      incrementTotalConversations();
+
+      // Reset the flag AFTER incrementing to prevent the welcome message useEffect 
+      // from also incrementing when new messages are added
+      setTimeout(() => {
+        conversationStartedRef.current = false;
+      }, 200);
+    }
   };
 
   return (
@@ -191,7 +352,20 @@ export default function ChatInterface() {
               </button>
             </div>
           </div>
-          <CreditsManager />
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={clearConversation}
+              className="px-3 py-1.5 text-xs rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors flex items-center"
+              title="Clear conversation"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              New Chat
+            </button>
+            <CreditsManager />
+            <UserProfile />
+          </div>
         </div>
       </header>
 
@@ -213,12 +387,11 @@ export default function ChatInterface() {
                       </div>
                     </div>
                   )}
-                  <div 
-                    className={`max-w-xs sm:max-w-md md:max-w-lg rounded-lg p-3 ${
-                      message.sender === 'user' 
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-600' 
+                  <div
+                    className={`max-w-xs sm:max-w-md md:max-w-lg rounded-lg p-3 ${message.sender === 'user'
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-600'
                         : 'bg-gray-800'
-                    }`}
+                      }`}
                   >
                     <p className="text-white">{message.content}</p>
                   </div>
@@ -296,4 +469,4 @@ export default function ChatInterface() {
       </footer>
     </div>
   );
-} 
+}

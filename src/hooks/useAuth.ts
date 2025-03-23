@@ -5,7 +5,7 @@ import { useStore } from '@/store/useStore';
 import { doc, getDoc } from 'firebase/firestore';
 
 export function useAuth() {
-  const { setUser, setCredits } = useStore();
+  const { setUser, setCredits, loadUserData } = useStore();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -14,14 +14,10 @@ export function useAuth() {
         setUser(user);
 
         try {
-          // Get user data from Firestore
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setCredits(userData.credits || 0);
-          }
+          // Load user data including credits and metrics
+          await loadUserData(user.uid);
         } catch (error) {
-          console.error('Error fetching user data:', error);
+          console.error('Error loading user data:', error);
           setCredits(0);
         }
       } else {
@@ -33,5 +29,5 @@ export function useAuth() {
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, [setUser, setCredits]);
+  }, [setUser, setCredits, loadUserData]);
 } 

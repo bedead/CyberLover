@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
-export default function SuccessPage() {
+// Create a client component that uses useSearchParams
+function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { addCredits } = useStore();
@@ -28,12 +29,21 @@ export default function SuccessPage() {
   }, [searchParams, router, addCredits]);
 
   return (
+    <div className="text-center">
+      <h1 className="text-4xl font-bold text-green-600 mb-4">Payment Successful!</h1>
+      <p className="text-gray-600">Your credits have been added to your account.</p>
+      <p className="text-gray-500 mt-2">Redirecting you back...</p>
+    </div>
+  );
+}
+
+// Wrap with Suspense in the main page component
+export default function SuccessPage() {
+  return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-green-600 mb-4">Payment Successful!</h1>
-        <p className="text-gray-600">Your credits have been added to your account.</p>
-        <p className="text-gray-500 mt-2">Redirecting you back...</p>
-      </div>
+      <Suspense fallback={<div className="text-center">Loading...</div>}>
+        <SuccessContent />
+      </Suspense>
     </div>
   );
 } 

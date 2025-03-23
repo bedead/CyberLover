@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-    apiVersion: '2025-02-24.acacia',
-});
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
+// Initialize Stripe with a dynamic API version to avoid type issues
+const stripe = stripeSecretKey 
+  ? new Stripe(stripeSecretKey, {
+      apiVersion: '2023-10-16' as any, // Force type cast to avoid API version restrictions
+    })
+  : null;
 
 export async function POST(request: Request) {
     try {
@@ -11,10 +15,8 @@ export async function POST(request: Request) {
 
         // Check if Stripe is properly initialized
         if (!stripe) {
-            return new Response(
-                JSON.stringify({ 
-                    error: 'Stripe is not configured. Please set the STRIPE_SECRET_KEY environment variable.' 
-                }),
+            return NextResponse.json(
+                { error: 'Stripe is not configured. Please set the STRIPE_SECRET_KEY environment variable.' },
                 { status: 500 }
             );
         }

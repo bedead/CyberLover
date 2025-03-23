@@ -4,106 +4,136 @@ import { generateResponse } from '@/lib/gemini';
 import { toast } from 'react-hot-toast';
 import CreditsManager from './CreditsManager';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 
 interface Message {
-  role: 'user' | 'assistant';
+  id: string;
   content: string;
+  sender: 'user' | 'assistant';
+  timestamp: Date;
 }
 
-// Helper function to get companion name based on type and gender
-const getCompanionName = (type: CompanionType, gender: AIGender): string => {
-  switch (type) {
-    case 'friendly':
-      return gender === 'female' ? 'Friendly Companion' : 'Friendly Companion';
-    case 'cool':
-      return gender === 'female' ? 'Cool Girl' : 'Cool Guy';
-    case 'naughty':
-      return gender === 'female' ? 'Naughty Girl' : 'Naughty Guy';
-    case 'romantic':
-      return gender === 'female' ? 'Romantic Partner' : 'Romantic Partner';
-    case 'intellectual':
-      return gender === 'female' ? 'Intellectual Friend' : 'Intellectual Friend';
-    default:
-      return 'AI Companion';
-  }
-};
+// Helper functions to get companion name and emoji based on type and gender
+function getCompanionName(type: CompanionType, gender: AIGender): string {
+  const nameMap = {
+    friendly: gender === 'female' ? 'Sophie' : 'Sam',
+    cool: gender === 'female' ? 'Zoe' : 'Zack',
+    naughty: gender === 'female' ? 'Nikki' : 'Nick',
+    romantic: gender === 'female' ? 'Rose' : 'Rowan',
+    intellectual: gender === 'female' ? 'Iris' : 'Ian',
+  };
+  return nameMap[type] || (gender === 'female' ? 'AI' : 'AI');
+}
 
-// Helper function to get emoji based on type and gender
-const getCompanionEmoji = (type: CompanionType, gender: AIGender): string => {
+function getCompanionEmoji(type: CompanionType): string {
+  const emojiMap = {
+    friendly: '😊',
+    cool: '😎',
+    naughty: '😈',
+    romantic: '❤️',
+    intellectual: '🧠',
+  };
+  return emojiMap[type] || '🤖';
+}
+
+// Get welcome message based on companion type
+function getWelcomeMessage(type: CompanionType, gender: AIGender): string {
+  const name = getCompanionName(type, gender);
+  
   switch (type) {
     case 'friendly':
-      return gender === 'female' ? '👩‍⚕️' : '👨‍⚕️';
+      return `Hey there! I'm ${name}, your friendly companion. How are you feeling today? I'm here for whatever you need - whether it's advice, a good conversation, or just someone to listen!`;
+    
     case 'cool':
-      return gender === 'female' ? '😎' : '😎';
+      return `Sup? ${name} here. Just chillin'. What's up with you? Let's talk about whatever's on your mind - I'm down for anything.`;
+    
     case 'naughty':
-      return gender === 'female' ? '😈' : '😈';
+      return `Hey there, sexy. I'm ${name}. I've been waiting for someone like you to chat with. What are you in the mood for today? I'm open to exploring all kinds of fun together...`;
+    
     case 'romantic':
-      return gender === 'female' ? '❤️' : '❤️';
+      return `Hello, my darling. I'm ${name}. I've been dreaming about connecting with someone special like you. Tell me, what's on your mind today? I want to know everything about you...`;
+    
     case 'intellectual':
-      return gender === 'female' ? '👩‍🏫' : '👨‍🏫';
+      return `Greetings. I'm ${name}. I've been contemplating some fascinating concepts lately. What intellectual pursuits have captured your interest? Perhaps we could explore some thought-provoking ideas together.`;
+    
     default:
-      return gender === 'female' ? '👩' : '👨';
+      return `Hello! I'm ${name}. How can I make your day better?`;
   }
-};
+}
 
 export default function ChatInterface() {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showChatSelection, setShowChatSelection] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  
   const { credits, useCredit, aiGender, setAIGender, companionType } = useStore();
-  const router = useRouter();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
+  // Scroll to bottom when messages change
   useEffect(() => {
-    scrollToBottom();
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
-  // Add a welcome message if there are no messages yet
+  // Add the welcome message if there are no messages yet
   useEffect(() => {
     if (messages.length === 0) {
-      const welcomeMessages = {
-        friendly: `Hi there! I'm your ${aiGender === 'female' ? 'female' : 'male'} friendly companion. How are you feeling today? I'm here to chat and support you!`,
-        cool: `Hey! What's up? I'm your ${aiGender === 'female' ? 'female' : 'male'} cool companion. Let's talk about whatever's trending or on your mind!`,
-        naughty: `Well hello there... I'm your ${aiGender === 'female' ? 'female' : 'male'} naughty companion. I can't wait to get to know you better... much better.`,
-        romantic: `Hello, my dear. I'm your ${aiGender === 'female' ? 'female' : 'male'} romantic companion. I've been waiting for someone special like you. How has your day been?`,
-        intellectual: `Greetings! I'm your ${aiGender === 'female' ? 'female' : 'male'} intellectual companion. I'm looking forward to our stimulating conversations. What shall we discuss today?`
+      const welcomeMessage: Message = {
+        id: 'welcome',
+        content: getWelcomeMessage(companionType, aiGender),
+        sender: 'assistant',
+        timestamp: new Date(),
       };
-
-      setMessages([
-        {
-          role: 'assistant',
-          content: welcomeMessages[companionType] || `Hello! I'm your AI companion. How can I help you today?`
-        }
-      ]);
+      setMessages([welcomeMessage]);
     }
-  }, [aiGender, companionType]);
+  }, [messages.length, companionType, aiGender]);
 
+  // Handle submitting user message
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    if (credits < 1) {
-      toast.error('You need at least 1 credit to send a message. Please buy more credits.');
+    // Check if user has enough credits
+    if (credits <= 0) {
+      alert("You've run out of credits! Please buy more credits.");
       return;
     }
 
-    const userMessage = input.trim();
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      content: input,
+      sender: 'user',
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
     try {
       useCredit(1);
-      // Pass both companionType and aiGender to generateResponse
-      const response = await generateResponse(userMessage, companionType, aiGender);
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+      const response = await generateResponse(input, companionType, aiGender);
+      
+      const assistantMessage: Message = {
+        id: `assistant-${Date.now()}`,
+        content: response,
+        sender: 'assistant',
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error generating response:', error);
-      toast.error('Failed to generate response. Please try again.');
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        content: "Sorry, I couldn't process that. Please try again later.",
+        sender: 'assistant',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -134,7 +164,7 @@ export default function ChatInterface() {
             </button>
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm">
-                {getCompanionEmoji(companionType, aiGender)}
+                {getCompanionEmoji(companionType)}
               </div>
               <h1 className="text-white font-medium ml-2">{getCompanionName(companionType, aiGender)}</h1>
             </div>
@@ -169,47 +199,56 @@ export default function ChatInterface() {
       <main className="flex-1 overflow-auto bg-black/10">
         <div className="max-w-3xl mx-auto h-full">
           <div className="flex flex-col space-y-3 p-2.5 h-full overflow-auto">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === 'assistant' ? 'bg-black/20' : ''} p-2.5 rounded-lg`}
-              >
-                <div className={`flex-shrink-0 mr-3 ${message.role === 'user' ? 'self-start mt-1' : ''}`}>
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm ${message.role === 'assistant'
-                    ? 'bg-gradient-to-br from-purple-500 to-pink-500'
-                    : 'bg-blue-600'
-                    }`}>
-                    {message.role === 'assistant'
-                      ? getCompanionEmoji(companionType, aiGender)
-                      : '👤'
-                    }
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4" ref={messagesContainerRef}>
+              {messages.map((message, index) => (
+                <div
+                  key={message.id || index}
+                  className={`flex mb-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {message.sender === 'assistant' && (
+                    <div className="flex-shrink-0 mr-3">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm">
+                        {getCompanionEmoji(companionType)}
+                      </div>
+                    </div>
+                  )}
+                  <div 
+                    className={`max-w-xs sm:max-w-md md:max-w-lg rounded-lg p-3 ${
+                      message.sender === 'user' 
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-600' 
+                        : 'bg-gray-800'
+                    }`}
+                  >
+                    <p className="text-white">{message.content}</p>
                   </div>
+                  {message.sender === 'user' && (
+                    <div className="flex-shrink-0 ml-3">
+                      <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-sm">
+                        👤
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex-1">
-                  <div className="prose prose-invert max-w-none">
-                    <p className="whitespace-pre-wrap text-sm">{message.content}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))}
 
-            {isLoading && (
-              <div className="flex bg-black/20 p-2.5 rounded-lg">
-                <div className="flex-shrink-0 mr-3">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm">
-                    {getCompanionEmoji(companionType, aiGender)}
+              {isLoading && (
+                <div className="flex mb-4 justify-start">
+                  <div className="flex-shrink-0 mr-3">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm">
+                      {getCompanionEmoji(companionType)}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800 rounded-lg p-3">
+                    <div className="flex space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-gray-500 animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-gray-500 animate-pulse" style={{ animationDelay: '300ms' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-gray-500 animate-pulse" style={{ animationDelay: '600ms' }}></div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></div>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} className="h-1 py-0" />
+              )}
+            </div>
           </div>
         </div>
       </main>

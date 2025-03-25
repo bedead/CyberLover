@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { doc, updateDoc, increment, serverTimestamp, Timestamp, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import LoadingScreen from './LoadingScreen';
 
 // Define a default metrics object for new users or when metrics are missing
 const defaultMetrics: UserMetrics = {
@@ -141,6 +142,8 @@ export default function ChatInterface() {
   const [showChatSelection, setShowChatSelection] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const conversationStartedRef = useRef(false);
+  const [isChangingCompanion, setIsChangingCompanion] = useState(false);
+  const [isStartingNewChat, setIsStartingNewChat] = useState(false);
 
   const {
     credits,
@@ -152,7 +155,8 @@ export default function ChatInterface() {
     updateLastOnline,
     user,
     userMetrics,
-    incrementTotalConversations
+    incrementTotalConversations,
+    setCompanionType
   } = useStore();
 
   // Update last online status when component mounts
@@ -171,8 +175,9 @@ export default function ChatInterface() {
 
   // Add the welcome message if there are no messages yet
   useEffect(() => {
-    if (messages.length === 0) {
-      // Add welcome message
+    // If user has just cleared chat, or if there are no messages
+    if (messages.length === 0 && !isStartingNewChat) {
+      console.log("Initializing chat with welcome message");
       const welcomeMessage: Message = {
         id: 'welcome',
         content: getWelcomeMessage(companionType, aiGender),
@@ -181,26 +186,25 @@ export default function ChatInterface() {
       };
       setMessages([welcomeMessage]);
 
-      // Only increment conversation count for initial load
-      // NOT when we've just cleared the conversation with the New Chat button
+      // DO NOT increment conversation count on initial load or component switching
+      // This was causing double counting with the new chat button
       if (!conversationStartedRef.current && user) {
         console.log("Setting conversation started flag to true");
         conversationStartedRef.current = true;
-
-        // Check if this is the very first conversation of a new session
+        
+        // We no longer increment totalConversations here
+        // The only place to increment should be the clearConversation function
+        // when user explicitly clicks "New Chat"
+        
+        // Set session flag to avoid double increments in the future
         const sessionKey = `chat_session_${user.uid}`;
-        const isFirstSession = !localStorage.getItem(sessionKey);
-
-        if (isFirstSession) {
-          console.log("First session detected, incrementing conversation count");
+        if (!localStorage.getItem(sessionKey)) {
           localStorage.setItem(sessionKey, "true");
-          incrementTotalConversations();
-        } else {
-          console.log("Not first session, not incrementing count");
+          console.log("First session detected, session flag set");
         }
       }
     }
-  }, [messages.length, companionType, aiGender, user, userMetrics, incrementTotalConversations]);
+  }, [messages.length, companionType, aiGender, user, userMetrics, isStartingNewChat]);
 
   // Reset conversationStarted flag when component type changes
   useEffect(() => {
@@ -290,26 +294,49 @@ export default function ChatInterface() {
   }, [user, updateLastOnline]);
 
   // Function to clear the conversation
-  const clearConversation = () => {
+  const clearConversation = async () => {
+    setIsStartingNewChat(true);
     // Clear all messages
     setMessages([]);
-
+    
     // Always increment conversation count in Firebase when user explicitly starts a new chat
     if (user) {
       console.log("New Chat button clicked - incrementing conversation count");
       // Use the store function for consistent updating
-      incrementTotalConversations();
-
+      await incrementTotalConversations();
+      
       // Reset the flag AFTER incrementing to prevent the welcome message useEffect 
       // from also incrementing when new messages are added
       setTimeout(() => {
         conversationStartedRef.current = false;
       }, 200);
     }
+    setIsStartingNewChat(false);
+  };
+
+  // Function to handle companion type change
+  const handleCompanionTypeChange = async (type: CompanionType) => {
+    setIsChangingCompanion(true);
+    await setCompanionType(type);
+    setIsChangingCompanion(false);
   };
 
   return (
     <div className="flex flex-col h-screen max-h-screen overflow-hidden">
+      {/* Loading Overlays */}
+      {isChangingCompanion && (
+        <LoadingScreen 
+          message="Changing companion type..." 
+          fullScreen 
+        />
+      )}
+      {isStartingNewChat && (
+        <LoadingScreen 
+          message="Starting new chat..." 
+          fullScreen 
+        />
+      )}
+
       {/* Chat header with AI info and options */}
       <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 py-2 px-3 flex-shrink-0">
         <div className="max-w-5xl mx-auto flex items-center justify-between">

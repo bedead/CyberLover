@@ -29,12 +29,11 @@ export default function SignUp() {
       await setDoc(doc(db, 'users', user.uid), {
         username,
         email,
-        credits: 10,
-        conversationsCount: 0,
+        credits: 100,
         createdAt: serverTimestamp(),
       });
 
-      toast.success('Account created with 10 credits!');
+      toast.success('Account created with 100 credits!');
       router.push('/chat');
     } catch (error: any) {
       console.error('Error signing up:', error);

@@ -14,7 +14,7 @@ export default function CompanionChatPage({
   params: { type: string } 
 }) {
   const router = useRouter();
-  const { setCompanionType } = useStore();
+  const { setCompanionType, incrementTotalConversations, user } = useStore();
   const type = params.type as CompanionType;
 
   // Validate the companion type and redirect if invalid
@@ -27,7 +27,13 @@ export default function CompanionChatPage({
 
     // Set the companion type in the store
     setCompanionType(type as CompanionType);
-  }, [type, router, setCompanionType]);
+    
+    // Increment conversation count when any companion type is selected directly via URL
+    if (user) {
+      console.log(`Incrementing conversation count for direct navigation to: ${type}`);
+      incrementTotalConversations();
+    }
+  }, [type, router, setCompanionType, incrementTotalConversations, user]);
 
   // If the type is not valid, don't render anything
   if (!validCompanionTypes.includes(type as CompanionType)) {

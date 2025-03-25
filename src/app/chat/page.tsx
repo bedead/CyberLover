@@ -45,10 +45,19 @@ const companions = [
 
 export default function ChatPage() {
   const router = useRouter();
-  const { setCompanionType } = useStore();
+  const { setCompanionType, incrementTotalConversations, user } = useStore();
 
-  const handleSelectCompanion = (type: CompanionType) => {
-    setCompanionType(type);
+  const handleSelectCompanion = async (type: CompanionType) => {
+    // First set the companion type
+    await setCompanionType(type);
+    
+    // Increment conversation count when any companion type is selected
+    if (user) {
+      console.log(`Incrementing conversation count for companion selection: ${type}`);
+      await incrementTotalConversations();
+    }
+    
+    // Navigate to the chat page
     router.push(`/chat/${type}`);
   };
 

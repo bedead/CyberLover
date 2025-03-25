@@ -8,12 +8,15 @@ import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import ThemeLayout from '@/components/ThemeLayout';
+import LoadingScreen from '@/components/LoadingScreen';
+import { useStore } from '@/store/useStore';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { setUser } = useStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,18 +25,18 @@ export default function SignIn() {
     try {
       // Sign in with Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      setUser(userCredential.user);
 
       // Get user document from Firestore
-      const userDocRef = doc(db, 'users', user.uid);
+      const userDocRef = doc(db, 'users', userCredential.user.uid);
       const userDoc = await getDoc(userDocRef);
       
       // If user document exists but doesn't have credits field, add it
       if (userDoc.exists() && !userDoc.data().credits) {
-        await setDoc(userDocRef, { credits: 10 }, { merge: true });
+        await setDoc(userDocRef, { credits: 100 }, { merge: true });
       }
 
-      toast.success('Successfully signed in!');
+      toast.success('Signed in successfully!');
       router.push('/chat');
     } catch (error: any) {
       console.error('Error signing in:', error);
@@ -43,7 +46,7 @@ export default function SignIn() {
       } else if (error.code === 'auth/too-many-requests') {
         toast.error('Too many failed login attempts. Please try again later');
       } else {
-        toast.error('Failed to sign in. Please try again.');
+        toast.error(error.message || 'Failed to sign in');
       }
     } finally {
       setIsLoading(false);
@@ -52,6 +55,7 @@ export default function SignIn() {
 
   return (
     <ThemeLayout>
+      {isLoading && <LoadingScreen message="Signing in..." fullScreen />}
       <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
         <div className="max-w-md mx-auto w-full p-4">
           <div className="bg-black/30 backdrop-blur-xl rounded-xl border border-white/10 overflow-hidden">

@@ -28,7 +28,7 @@ export default function SignIn() {
         const userId = userCredential.user.uid;
         await setDoc(doc(db, 'users', userId), {
           email: userCredential.user.email,
-          credits: 10, // Give new users some starter credits
+          credits: 100, // Give new users some starter credits
           metrics: {
             totalConversations: 0,
             lastOnline: serverTimestamp(),
@@ -48,7 +48,7 @@ export default function SignIn() {
         // Load the user data to update the local state
         await loadUserData(userId);
         
-        toast.success('Account created successfully! You\'ve received 10 free credits.');
+        toast.success('Account created successfully! You\'ve received 100 free credits.');
       } else {
         // Sign in existing user
         const userCredential = await signInWithEmailAndPassword(auth, email, password);

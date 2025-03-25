@@ -18,12 +18,12 @@ interface PricingPlan {
 export default function BuyCredits() {
   const { credits, addCredits } = useStore();
   const router = useRouter();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
   
   const pricingPlans: PricingPlan[] = [
-    { id: 'basic', credits: 20, price: 4.99 },
-    { id: 'standard', credits: 50, price: 9.99, popular: true },
-    { id: 'premium', credits: 120, price: 19.99 },
+    { id: 'basic', credits: 20, price: 1 },
+    { id: 'standard', credits: 50, price: 2, popular: true },
+    { id: 'premium', credits: 120, price: 5 },
   ];
 
   const handlePurchase = async (plan: PricingPlan) => {
@@ -33,31 +33,25 @@ export default function BuyCredits() {
       return;
     }
 
-    setIsProcessing(true);
+    setProcessingPlanId(plan.id);
 
     try {
-      // In a real app, you would integrate with payment provider here
-      // This is a simulated purchase for demo purposes
-      
       // Simulate a payment processing delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Update user's credits in Firestore
-      const userDocRef = doc(db, 'users', auth.currentUser.uid);
-      await updateDoc(userDocRef, {
-        credits: increment(plan.credits)
+      // Show "feature under development" toast instead of processing payment
+      toast.success('This feature is under development! Credits were not added.', {
+        duration: 5000,
+        icon: '🚧'
       });
       
-      // Update credits in local state
-      addCredits(plan.credits);
+      // Don't add any credits or update Firestore
       
-      toast.success(`Successfully purchased ${plan.credits} credits!`);
-      router.push('/chat');
     } catch (error) {
-      console.error('Error purchasing credits:', error);
-      toast.error('Failed to process payment. Please try again.');
+      console.error('Error:', error);
+      toast.error('Something went wrong. Please try again later.');
     } finally {
-      setIsProcessing(false);
+      setProcessingPlanId(null);
     }
   };
 
@@ -81,43 +75,43 @@ export default function BuyCredits() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {pricingPlans.map((plan) => (
             <div 
               key={plan.id}
-              className={`bg-black/30 backdrop-blur-xl rounded-xl border ${
+              className={`bg-black/30 backdrop-blur-xl rounded-xl border transition-all ${
                 plan.popular 
-                  ? 'border-purple-500/30 relative overflow-hidden' 
+                  ? 'border-purple-500/50 relative overflow-hidden md:scale-110 md:-mx-4 shadow-lg shadow-purple-500/20 z-10' 
                   : 'border-white/10'
               }`}
             >
               {plan.popular && (
                 <div className="absolute top-0 right-0">
-                  <div className="bg-purple-600 text-white text-xs font-bold py-1 px-3 rounded-bl-lg">
-                    POPULAR
+                  <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold py-1 px-3 rounded-bl-lg">
+                    BEST VALUE
                   </div>
                 </div>
               )}
               
-              <div className="p-6">
+              <div className={`p-6 ${plan.popular ? 'py-8' : ''}`}>
                 <h3 className="text-xl font-semibold text-white mb-2">
                   {plan.id === 'basic' ? 'Basic' : plan.id === 'standard' ? 'Standard' : 'Premium'}
                 </h3>
                 
                 <div className="mb-4">
-                  <span className="text-3xl font-bold text-white">${plan.price}</span>
+                  <span className={`${plan.popular ? 'text-4xl' : 'text-3xl'} font-bold ${plan.popular ? 'text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400' : 'text-white'}`}>${plan.price}</span>
                 </div>
                 
                 <div className="border-t border-white/10 my-4 pt-4">
                   <ul className="space-y-2">
                     <li className="flex items-center text-gray-300">
-                      <svg className="h-5 w-5 mr-2 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className={`h-5 w-5 mr-2 ${plan.popular ? 'text-purple-400' : 'text-green-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       <span><span className="font-bold text-white">{plan.credits} credits</span> for chatting</span>
                     </li>
                     <li className="flex items-center text-gray-300">
-                      <svg className="h-5 w-5 mr-2 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className={`h-5 w-5 mr-2 ${plan.popular ? 'text-purple-400' : 'text-green-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       {plan.id === 'basic' 
@@ -127,7 +121,7 @@ export default function BuyCredits() {
                           : 'Premium chat experience'}
                     </li>
                     <li className="flex items-center text-gray-300">
-                      <svg className="h-5 w-5 mr-2 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className={`h-5 w-5 mr-2 ${plan.popular ? 'text-purple-400' : 'text-green-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       No subscription, pay as you go
@@ -137,14 +131,14 @@ export default function BuyCredits() {
                 
                 <button
                   onClick={() => handlePurchase(plan)}
-                  disabled={isProcessing}
+                  disabled={processingPlanId !== null}
                   className={`w-full py-3 mt-2 rounded-lg transition-all ${
                     plan.popular 
-                      ? 'rainbow-border bg-black/50' 
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold shadow-lg shadow-purple-500/30' 
                       : 'bg-black/40 border border-white/10 hover:bg-black/60'
                   }`}
                 >
-                  {isProcessing 
+                  {processingPlanId === plan.id 
                     ? <span className="flex items-center justify-center">
                         <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -152,7 +146,7 @@ export default function BuyCredits() {
                         </svg>
                         Processing...
                       </span>
-                    : 'Purchase Now'
+                    : plan.popular ? 'Get Best Value' : 'Purchase Now'
                   }
                 </button>
               </div>

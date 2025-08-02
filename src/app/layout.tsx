@@ -32,8 +32,8 @@ export default function RootLayout({
       >
         <AuthWrapper>
           {children}
-          <Analytics />
         </AuthWrapper>
+        <Analytics />
         <Toaster position="top-right" />
       </body>
     </html>
